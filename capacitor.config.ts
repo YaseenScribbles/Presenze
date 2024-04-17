@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'ionic.presenze',
-  appName: 'presenze',
+  appId: 'com.essa.presenze',
+  appName: 'Presenze',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

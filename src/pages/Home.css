@@ -1,0 +1,24 @@
+.background-image-container {
+  height: 100vh;
+  background-image: url("../common/HOME_BACKGROUND.png");
+  background-color: #3DC2FF;
+  position: relative;
+}
+
+.content {
+    font-family: 'Jersey 10 Charted', sans-serif;   
+    font-size: xx-large;     
+}
+
+.logout-button {
+    position: absolute;
+    display: flex;
+    bottom: 5%;
+    justify-content: center;
+    width: 100%;    
+    font-size: xx-large;
+}
+
+.menu-btn.active {
+    color: #000;
+}
