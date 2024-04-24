@@ -1,0 +1,82 @@
+ion-title {
+  font-family: "Poppins", sans-serif;
+}
+
+ion-content {
+  font-family: "Poppins", sans-serif;
+}
+
+ion-page {
+  position: relative;
+}
+
+ion-fab {
+  position: absolute;
+  bottom: 3%;
+  right: 5%;
+}
+
+.item-inner {
+  padding: 0;
+}
+
+.checkin-grid {
+  display: grid;
+  grid-template-columns: repeat(1fr, 5);
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas:
+    "t t t s s"
+    "p p p s s";
+  border-radius: 5px;
+  column-gap: 0.5rem;
+  font-family: "Poppins", sans-serif;
+  width: 100%;
+}
+
+.time {
+  grid-area: t;
+  text-wrap: nowrap;
+}
+
+.selfie {
+  grid-area: s;
+  display: flex;
+  justify-content: center;
+}
+
+img {
+  height: 100px;
+  width: 100px;
+  min-height: 100px;
+  min-width: 100px;
+  object-fit: cover;
+  border-radius: 25px;
+}
+
+.place {
+  grid-area: p;
+}
+
+ion-modal.stack-modal {
+  --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+  --backdrop-opacity: var(--ion-backdrop-opacity, 0.32);
+}
+
+ion-modal#location-modal {
+  --height: 30%;
+  --width: 80%;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+ion-modal#location-modal::part(backdrop) {
+  background: rgba(209, 213, 219);
+  opacity: 1;
+}
+
+ion-modal#location-modal ion-toolbar {
+  --background: #428CFF;
+  --color: white;
+}
+

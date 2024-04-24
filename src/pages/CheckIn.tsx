@@ -4,18 +4,32 @@ import {
   IonButtons,
   IonCol,
   IonContent,
+  IonFab,
+  IonFabButton,
+  IonGrid,
   IonHeader,
+  IonIcon,
+  IonImg,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
   IonLoading,
+  IonModal,
+  IonNote,
   IonPage,
+  IonRefresher,
+  IonRefresherContent,
   IonRow,
+  IonThumbnail,
   IonTitle,
   IonToolbar,
+  RefresherEventDetail,
   useIonToast,
-  useIonViewDidEnter,
 } from "@ionic/react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Geolocation, Position } from "@capacitor/geolocation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Camera,
   CameraResultType,
@@ -25,59 +39,120 @@ import {
 } from "@capacitor/camera";
 import axios from "axios";
 import Compressor from "compressorjs";
-import { LOCAL_URL, STATIC_URL } from "../common/common";
-import { App } from "@capacitor/app";
-import { caretBack } from "ionicons/icons";
+import {
+  LOCAL_URL,
+  LOCAL_URL_FILE,
+  STATIC_URL,
+  STATIC_URL_FILE,
+  formatDate,
+} from "../common/common";
+import {
+  cameraOutline,
+  caretBack,
+  closeOutline,
+  locationOutline,
+} from "ionicons/icons";
 import { useUserContext } from "../context/UserContext";
 import { Redirect } from "react-router";
+import "./CheckIn.css";
 
 const CheckIn: React.FC = () => {
   const [position, setPosition] = useState<Position>();
-  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [city , setCity] = useState<string>("");
   const [image, setImage] = useState<Photo>();
   const [loading, setLoading] = useState<boolean>(false);
   const [present] = useIonToast();
   const { user } = useUserContext();
+  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  interface CheckIn {
+    user_id: number;
+    location: string;
+    image_path: string;
+    created_at: string;
+  }
+  const modalRef = useRef<HTMLIonModalElement>(null);
 
   if (!user) {
     return <Redirect to={"/login"} />;
   }
 
-  useIonViewDidEnter(() => {
-    isPermissionEnabled();
-    getCurrentPosition();
-  });
-
-  const isPermissionEnabled = async () => {
-    const status = await Geolocation.checkPermissions();
-    const { location } = status;
-
-    if (location === "denied") {
+  const getCheckIns = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${LOCAL_URL}checkin?user_id=${user.id}`
+      );
+      if (response.status === 200) {
+        const [data] = response.data;
+        setCheckIns(data || []);
+      } else {
+        setCheckIns([]);
+      }
+    } catch (error: any) {
       present({
-        message: "Location permission is denied. Exiting the app.",
+        message: error.toString(),
         duration: 3000,
       });
-      App.exitApp();
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    getCurrentPosition();
+    getCheckIns();
+  }, []);
+
   const getCurrentPosition = async () => {
     setLoading(true);
-    const position = await Geolocation.getCurrentPosition();
-    const { coords } = position;
-    setPosition(position);
-    await loadMap(coords.latitude, coords.longitude);
-    setLoading(false);
+    try {
+      let position = await Geolocation.getCurrentPosition({
+        maximumAge: 5000,
+      });
+
+      if (
+        !position ||
+        !position.coords ||
+        position.coords.latitude === 0 ||
+        position.coords.longitude === 0
+      ) {
+        // Handle case where position is undefined or incomplete
+        present({
+          message: "Can't fetch current coordinates",
+          duration: 3000,
+        });
+        // Use fallback mechanism here if needed
+      } else {
+        const { coords } = position;
+        setPosition(position);
+        await loadMap(coords.latitude, coords.longitude);
+      }
+    } catch (error: any) {
+      present({
+        message: error.toString(),
+        duration: 3000,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadMap = async (lat: number, long: number) => {
-    const result = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${long}&format=json`
-    );
-    const data = await result.json();
-    console.log(data);
-    const { address } = data;
-    setName(address.city || "");
+    try {
+      const result = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${long}&format=json`
+      );
+      const data = await result.json();      
+      const { display_name, address } = data;  
+      setCity(address.city || address.state_district);    
+      setLocation(display_name || "");
+    } catch (error: any) {
+      present({
+        message: error.toString(),
+        duration: 3000,
+      });
+    }
   };
 
   const loadCamera = async () => {
@@ -116,8 +191,8 @@ const CheckIn: React.FC = () => {
     try {
       if (compressedImage) {
         const body = {
-          user_id: 1,
-          location: name,
+          user_id: user.id,
+          location: city,
           image: compressedImage,
         };
 
@@ -130,14 +205,24 @@ const CheckIn: React.FC = () => {
           message: resp.data.message,
           duration: 3000,
         });
+        await getCheckIns();
       }
-    } catch (error) {
+    } catch (error: any) {
       present({
-        message: "Network error",
+        message: error.toString(),
         duration: 3000,
       });
     }
   };
+
+  const dismiss = () => {
+    modalRef.current?.dismiss();
+  };
+
+  const handleRefresh = async (e : CustomEvent<RefresherEventDetail>) => {
+    await getCheckIns();
+    e.detail.complete();
+  }
 
   return (
     <IonPage>
@@ -147,38 +232,72 @@ const CheckIn: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton text={"Menu"} icon={caretBack} />
           </IonButtons>
+          <IonButtons slot="end">
+            <IonButton id="open-modal">
+              <IonIcon icon={locationOutline} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen color={"dark"}>
-        <IonLoading isOpen={loading} message="Please wait..." duration={0} />
-        <IonRow>
-          <IonCol size="6" offset="3">
-            <IonButton
-              color={"medium"}
-              shape="round"
-              expand="block"
-              onClick={loadCamera}
-            >
-              Check In
-            </IonButton>
-          </IonCol>
-        </IonRow>
-        <IonRow>
-          <IonCol>{`Current Coordinates : ${position?.coords.latitude}, ${position?.coords.longitude} `}</IonCol>
-        </IonRow>
-        {name !== "" && (
-          <>
-            <IonRow>
-              <IonCol>Current Location :</IonCol>
-            </IonRow>
-            <IonRow>
-              <IonCol>{name.toUpperCase()}</IonCol>
-            </IonRow>
-          </>
-        )}
-        <IonRow>
-          <IonCol></IonCol>
-        </IonRow>
+      <IonContent fullscreen>
+        <IonRefresher slot={"fixed"} onIonRefresh={handleRefresh}>
+          <IonRefresherContent></IonRefresherContent>
+        </IonRefresher>
+        <IonModal trigger="open-modal" ref={modalRef} id="location-modal">
+          <IonContent>
+            <IonToolbar>
+              <IonTitle>Current Location</IonTitle>
+              <IonButtons slot="end">
+                <IonButton onClick={() => dismiss()}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+            <IonGrid>
+              <IonRow>
+                <IonCol>
+                  <IonNote class="text-center">
+                    <IonIcon icon={locationOutline} /> {location}
+                  </IonNote>
+                </IonCol>
+              </IonRow>
+            </IonGrid>
+          </IonContent>
+        </IonModal>
+        <IonLoading isOpen={loading} message="Please wait..." />
+        <IonList>
+          <IonListHeader>
+            <IonLabel>Previous Checkins</IonLabel>
+          </IonListHeader>
+          {checkIns.map((c, index) => {
+            return (
+              <IonItem key={index} className="mb-3">
+                <div className="checkin-grid">
+                  <div className="time">
+                    <div>Time</div>
+                    <strong>{formatDate(c.created_at)}</strong>
+                  </div>
+                  <div className="place">
+                    <div>Place</div>
+                    <strong>{c.location}</strong>
+                  </div>
+                  <div className="selfie">
+                    <img
+                      alt="user_selfie"
+                      src={`${LOCAL_URL_FILE}/${c.image_path}`}
+                    />
+                  </div>
+                </div>
+              </IonItem>
+            );
+          })}
+        </IonList>
+
+        <IonFab slot="fixed" vertical="bottom" horizontal="end">
+          <IonFabButton onClick={loadCamera} color={"primary"}>
+            <IonIcon icon={cameraOutline} />
+          </IonFabButton>
+        </IonFab>
       </IonContent>
     </IonPage>
   );

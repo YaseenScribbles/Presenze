@@ -62,10 +62,10 @@ export default function LogIn() {
       if (resp.status !== 200) return;
       setUser(response.user);
       router.push("/home");
-    } catch (error) {    
+    } catch (error: any) {    
       setLoading(false)  
       presentToast({
-        message: error as string,
+        message: error.toString(),
         duration: 3000
       })
     }

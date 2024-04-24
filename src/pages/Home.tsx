@@ -2,24 +2,51 @@ import {
   IonCol,
   IonContent,
   IonIcon,
+  IonLoading,
   IonPage,
   IonRow,
   useIonRouter,
-  useIonToast,  
+  useIonToast,
 } from "@ionic/react";
 import "./Home.css";
 import { logOutOutline } from "ionicons/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { LOCAL_URL,STATIC_URL } from "../common/common";
+import { LOCAL_URL, STATIC_URL } from "../common/common";
 import { useUserContext } from "../context/UserContext";
 import { Redirect } from "react-router";
+import { Geolocation } from "@capacitor/geolocation";
+import { App } from "@capacitor/app";
 
 const Home: React.FC = () => {
   const [activeBtn, setActiveBtn] = useState("checkin");
   const router = useIonRouter();
   const [present] = useIonToast();
-  const { user,removeUser } = useUserContext();
+  const { user, removeUser } = useUserContext();
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const isPermissionEnabled = async () => {
+    const status = await Geolocation.checkPermissions();
+    const { location } = status;
+
+    if (location !== "granted") {
+      const { location: locationPerm } = await Geolocation.requestPermissions();
+      if (locationPerm === "denied") {
+        setTimeout(() => {
+          present({
+            message: "Location permission is not granted. Exiting the app.",
+            duration: 3000,
+          });
+        }, 3000);
+
+        App.exitApp();
+      }
+    }
+  };
+
+  useEffect(() => {
+    isPermissionEnabled();
+  }, []);
 
   if (!user) {
     return <Redirect to={"/login"} />;
@@ -31,18 +58,21 @@ const Home: React.FC = () => {
   };
 
   const logout = async () => {
+    setLoading(true);
     const response = await axios.post(`${LOCAL_URL}logout`);
     present({
       message: response.data.message,
       duration: 3000,
     });
     if (response.status !== 200) return;
-    removeUser();    
+    removeUser();
+    setLoading(false);
   };
 
   return (
     <IonPage>
       <IonContent fullscreen>
+        <IonLoading isOpen={loading} />
         <div className="background-image-container">
           <div className="content d-flex flex-column justify-content-center align-items-center h-100">
             <IonRow>
