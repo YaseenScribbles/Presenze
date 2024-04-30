@@ -22,11 +22,12 @@ ion-fab {
 
 .checkin-grid {
   display: grid;
-  grid-template-columns: repeat(1fr, 5);
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: 1fr 0.5fr 1.25fr;
   grid-template-areas:
-    "t t t s s"
-    "p p p s s";
+    "s s s s s"
+    "t t t t t"
+    "p p p p p";
   border-radius: 5px;
   column-gap: 0.5rem;
   font-family: "Poppins", sans-serif;
@@ -34,6 +35,8 @@ ion-fab {
 }
 
 .time {
+  display: flex;
+  flex-direction: column;
   grid-area: t;
   text-wrap: nowrap;
 }

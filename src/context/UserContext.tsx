@@ -7,7 +7,7 @@ interface UserContextType {
   removeUser: () => void;
 }
 
-type UserType = {id : number, name : string , email: string} | null;
+type UserType = {id : number, name : string , email: string, role: string} | null;
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 

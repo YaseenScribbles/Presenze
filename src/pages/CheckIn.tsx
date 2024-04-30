@@ -9,7 +9,6 @@ import {
   IonGrid,
   IonHeader,
   IonIcon,
-  IonImg,
   IonItem,
   IonLabel,
   IonList,
@@ -21,7 +20,6 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonRow,
-  IonThumbnail,
   IonTitle,
   IonToolbar,
   RefresherEventDetail,
@@ -29,7 +27,7 @@ import {
 } from "@ionic/react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Geolocation, Position } from "@capacitor/geolocation";
-import { useEffect, useRef, useState } from "react";
+import {  useEffect, useRef, useState } from "react";
 import {
   Camera,
   CameraResultType,
@@ -55,11 +53,15 @@ import {
 import { useUserContext } from "../context/UserContext";
 import { Redirect } from "react-router";
 import "./CheckIn.css";
+import { App } from "@capacitor/app";
 
-const CheckIn: React.FC = () => {
+type CheckInProps = {
+  isCheckIn: boolean;
+};
+
+const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
   const [position, setPosition] = useState<Position>();
   const [location, setLocation] = useState("");
-  const [city , setCity] = useState<string>("");
   const [image, setImage] = useState<Photo>();
   const [loading, setLoading] = useState<boolean>(false);
   const [present] = useIonToast();
@@ -81,7 +83,7 @@ const CheckIn: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${LOCAL_URL}checkin?user_id=${user.id}`
+        `${STATIC_URL}${isCheckIn ? "checkin" : "checkout"}?user_id=${user.id}`
       );
       if (response.status === 200) {
         const [data] = response.data;
@@ -133,6 +135,15 @@ const CheckIn: React.FC = () => {
         message: error.toString(),
         duration: 3000,
       });
+      if (error.toString().toLowerCase().includes("disabled")) {
+        setTimeout(() => {
+          present({
+            message: "Exiting the app",
+            duration: 0,
+          });
+        },2000)
+        App.exitApp();
+      }
     } finally {
       setLoading(false);
     }
@@ -141,12 +152,17 @@ const CheckIn: React.FC = () => {
   const loadMap = async (lat: number, long: number) => {
     try {
       const result = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${long}&format=json`
+        `${STATIC_URL}geocode?lat=${lat}&lng=${long}`,
+        {
+          headers:{
+            'Accept': 'application/json'
+          }
+        }
       );
-      const data = await result.json();      
-      const { display_name, address } = data;  
-      setCity(address.city || address.state_district);    
-      setLocation(display_name || "");
+      const data = await result.json();
+      console.log(data.results[0].formatted_address);
+      const { results } = data;     
+      setLocation(results[0].formatted_address);
     } catch (error: any) {
       present({
         message: error.toString(),
@@ -192,15 +208,19 @@ const CheckIn: React.FC = () => {
       if (compressedImage) {
         const body = {
           user_id: user.id,
-          location: city,
+          location: location,
           image: compressedImage,
         };
 
-        const resp = await axios.post(`${LOCAL_URL}checkin`, body, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        const resp = await axios.post(
+          `${STATIC_URL}${isCheckIn ? "checkin" : "checkout"}`,
+          body,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
         present({
           message: resp.data.message,
           duration: 3000,
@@ -219,16 +239,16 @@ const CheckIn: React.FC = () => {
     modalRef.current?.dismiss();
   };
 
-  const handleRefresh = async (e : CustomEvent<RefresherEventDetail>) => {
+  const handleRefresh = async (e: CustomEvent<RefresherEventDetail>) => {
     await getCheckIns();
     e.detail.complete();
-  }
+  };
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar color={"secondary"}>
-          <IonTitle>CHECK IN</IonTitle>
+          <IonTitle>{`${isCheckIn ? "CHECK IN" : "CHECK OUT"}`}</IonTitle>
           <IonButtons slot="start">
             <IonBackButton text={"Menu"} icon={caretBack} />
           </IonButtons>
@@ -267,7 +287,9 @@ const CheckIn: React.FC = () => {
         <IonLoading isOpen={loading} message="Please wait..." />
         <IonList>
           <IonListHeader>
-            <IonLabel>Previous Checkins</IonLabel>
+            <IonLabel>
+              Previous {`${isCheckIn ? "Checkins" : "Checkouts"}`}
+            </IonLabel>
           </IonListHeader>
           {checkIns.map((c, index) => {
             return (
@@ -284,7 +306,7 @@ const CheckIn: React.FC = () => {
                   <div className="selfie">
                     <img
                       alt="user_selfie"
-                      src={`${LOCAL_URL_FILE}/${c.image_path}`}
+                      src={`${STATIC_URL_FILE}/${c.image_path}`}
                     />
                   </div>
                 </div>

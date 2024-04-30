@@ -30,22 +30,25 @@ const Home: React.FC = () => {
     const { location } = status;
 
     if (location !== "granted") {
-      const { location: locationPerm } = await Geolocation.requestPermissions();
-      if (locationPerm === "denied") {
-        setTimeout(() => {
-          present({
-            message: "Location permission is not granted. Exiting the app.",
-            duration: 3000,
-          });
-        }, 3000);
-
-        App.exitApp();
-      }
+      present({
+        message: "Location permission is not granted. Exiting the app.",
+        duration: 3000,
+      });
+      App.exitApp();
     }
   };
 
   useEffect(() => {
     isPermissionEnabled();
+    switch (router.routeInfo.lastPathname) {
+      case '/checkout':
+        setActiveBtn('checkout')
+        break;    
+      default:
+        setActiveBtn('checkin')
+        break;
+    }
+    
   }, []);
 
   if (!user) {
@@ -59,7 +62,7 @@ const Home: React.FC = () => {
 
   const logout = async () => {
     setLoading(true);
-    const response = await axios.post(`${LOCAL_URL}logout`);
+    const response = await axios.post(`${STATIC_URL}logout`);
     present({
       message: response.data.message,
       duration: 3000,
@@ -91,8 +94,9 @@ const Home: React.FC = () => {
               <IonCol>
                 <div
                   className={`menu-btn text-center ${
-                    activeBtn === "menu2" && "active"
+                    activeBtn === "checkout" && "active"
                   }`}
+                  onClick={() => renderPage("checkout")}
                 >
                   Check Out
                 </div>

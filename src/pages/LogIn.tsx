@@ -42,7 +42,7 @@ export default function LogIn() {
   const logInUser = async () => {
     setLoading(true)
     try {
-      const resp = await fetch(`${LOCAL_URL}login`, {
+      const resp = await fetch(`${STATIC_URL}login`, {
         method: "POST",
         body: JSON.stringify(credentials),
         headers: {
