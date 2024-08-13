@@ -22,29 +22,29 @@ ion-fab {
 
 .checkin-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: 1fr 0.5fr 1.25fr;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(2,1fr) 0.25fr;
   grid-template-areas:
-    "s s s s s"
-    "t t t t t"
-    "p p p p p";
-  border-radius: 5px;
+    "t t t t s s s"     
+    "p p p p p p p"
+    "p p p p p p p";      
   column-gap: 0.5rem;
   font-family: "Poppins", sans-serif;
-  width: 100%;
+  width: 100%; 
+  border-bottom: 1px dashed whitesmoke; 
 }
 
 .time {
   display: flex;
   flex-direction: column;
   grid-area: t;
-  text-wrap: nowrap;
+  text-wrap: nowrap;  
 }
 
 .selfie {
   grid-area: s;
   display: flex;
-  justify-content: center;
+  justify-content: center;  
 }
 
 img {
@@ -57,7 +57,7 @@ img {
 }
 
 .place {
-  grid-area: p;
+  grid-area: p
 }
 
 ion-modal.stack-modal {

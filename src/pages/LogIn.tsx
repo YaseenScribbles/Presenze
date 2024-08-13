@@ -15,7 +15,7 @@ import {
 import { FloatingLabel, Form } from "react-bootstrap";
 import { logInOutline } from "ionicons/icons";
 import { useState } from "react";
-import { LOCAL_URL, STATIC_URL } from "../common/common";
+import { URL } from "../common/common";
 import { useUserContext } from "../context/UserContext";
 import { Redirect } from "react-router";
 
@@ -42,7 +42,7 @@ export default function LogIn() {
   const logInUser = async () => {
     setLoading(true)
     try {
-      const resp = await fetch(`${STATIC_URL}login`, {
+      const resp = await fetch(`${URL}login`, {
         method: "POST",
         body: JSON.stringify(credentials),
         headers: {

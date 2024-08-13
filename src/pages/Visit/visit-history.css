@@ -1,0 +1,7 @@
+ion-item .purpose p {
+    font-family: 'Poppins', sans-serif;
+}
+
+ion-list-header#visits-heading {
+    font-size: 16px;     
+}

@@ -33,6 +33,8 @@ import "./theme/variables.css";
 /* Bootstrap imports */
 import "bootstrap/dist/css/bootstrap.min.css";
 import { UserContextProvider } from "./context/UserContext";
+import { Contact } from "./pages/Contact/Contact";
+import { Visit } from "./pages/Visit/Visit";
 
 setupIonicReact();
 
@@ -69,6 +71,12 @@ const App: React.FC = () => {
             </Route>
             <Route exact path="/checkout">
               <CheckIn isCheckIn={false} />
+            </Route>
+            <Route path="/contact">
+              <Contact />
+            </Route>
+            <Route path="/visit">
+              <Visit />
             </Route>
           </UserContextProvider>
         </IonRouterOutlet>

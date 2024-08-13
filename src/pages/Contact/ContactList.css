@@ -1,0 +1,10 @@
+/* Target specific elements inside ion-item */
+ion-item .shop-name h6,
+ion-item .place p,
+ion-item .person p {
+  font-family: "Poppins", sans-serif;
+}
+
+ion-list-header#contacts-heading{
+  font-size: 16px;
+}

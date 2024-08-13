@@ -12,7 +12,7 @@ import "./Home.css";
 import { logOutOutline } from "ionicons/icons";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { LOCAL_URL, STATIC_URL } from "../common/common";
+import { URL } from "../common/common";
 import { useUserContext } from "../context/UserContext";
 import { Redirect } from "react-router";
 import { Geolocation } from "@capacitor/geolocation";
@@ -30,25 +30,38 @@ const Home: React.FC = () => {
     const { location } = status;
 
     if (location !== "granted") {
-      present({
-        message: "Location permission is not granted. Exiting the app.",
-        duration: 3000,
-      });
-      App.exitApp();
+      const status2 = await Geolocation.requestPermissions();
+      const { location: location2 } = status2;
+      if (location2 !== "granted") {
+        setTimeout(() => {
+          present({
+            message: "Location permission is not granted. Exiting the app.",
+            duration: 0,
+          });
+        }, 3000);
+        App.exitApp();
+      }
     }
   };
 
   useEffect(() => {
     isPermissionEnabled();
     switch (router.routeInfo.lastPathname) {
-      case '/checkout':
-        setActiveBtn('checkout')
-        break;    
+      case "/checkout":
+        setActiveBtn("checkout");
+        break;
+      case "/contact/add":
+      case "/contact/list":
+        setActiveBtn("contact");
+        break;
+      case "/visit/add":
+      case "/visit/list":
+        setActiveBtn("visit");
+        break;
       default:
-        setActiveBtn('checkin')
+        setActiveBtn("checkin");
         break;
     }
-    
   }, []);
 
   if (!user) {
@@ -62,7 +75,7 @@ const Home: React.FC = () => {
 
   const logout = async () => {
     setLoading(true);
-    const response = await axios.post(`${STATIC_URL}logout`);
+    const response = await axios.post(`${URL}logout`);
     present({
       message: response.data.message,
       duration: 3000,
@@ -106,10 +119,11 @@ const Home: React.FC = () => {
               <IonCol>
                 <div
                   className={`menu-btn text-center ${
-                    activeBtn === "menu3" && "active"
+                    activeBtn === "contact" && "active"
                   }`}
+                  onClick={() => renderPage("contact")}
                 >
-                  Menu 3
+                  Contacts
                 </div>
               </IonCol>
             </IonRow>
@@ -117,10 +131,11 @@ const Home: React.FC = () => {
               <IonCol>
                 <div
                   className={`menu-btn text-center ${
-                    activeBtn === "menu4" && "active"
+                    activeBtn === "visit" && "active"
                   }`}
+                  onClick={() => renderPage("visit")}
                 >
-                  Menu 4
+                  Visits
                 </div>
               </IonCol>
             </IonRow>

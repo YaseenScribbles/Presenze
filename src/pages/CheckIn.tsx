@@ -27,7 +27,7 @@ import {
 } from "@ionic/react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Geolocation, Position } from "@capacitor/geolocation";
-import {  useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Camera,
   CameraResultType,
@@ -38,10 +38,8 @@ import {
 import axios from "axios";
 import Compressor from "compressorjs";
 import {
-  LOCAL_URL,
-  LOCAL_URL_FILE,
-  STATIC_URL,
-  STATIC_URL_FILE,
+  URL,
+  URL_FILE,
   formatDate,
 } from "../common/common";
 import {
@@ -83,7 +81,7 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${STATIC_URL}${isCheckIn ? "checkin" : "checkout"}?user_id=${user.id}`
+        `${URL}${isCheckIn ? "checkin" : "checkout"}?user_id=${user.id}`
       );
       if (response.status === 200) {
         const [data] = response.data;
@@ -133,7 +131,7 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
     } catch (error: any) {
       present({
         message: error.toString(),
-        duration: 3000,
+        duration: 0,
       });
       if (error.toString().toLowerCase().includes("disabled")) {
         setTimeout(() => {
@@ -141,7 +139,7 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
             message: "Exiting the app",
             duration: 0,
           });
-        },2000)
+        }, 2000);
         App.exitApp();
       }
     } finally {
@@ -152,16 +150,15 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
   const loadMap = async (lat: number, long: number) => {
     try {
       const result = await fetch(
-        `${STATIC_URL}geocode?lat=${lat}&lng=${long}`,
+        `${URL}geocode?lat=${lat}&lng=${long}`,
         {
-          headers:{
-            'Accept': 'application/json'
-          }
+          headers: {
+            Accept: "application/json",
+          },
         }
       );
-      const data = await result.json();
-      console.log(data.results[0].formatted_address);
-      const { results } = data;     
+      const data = await result.json();      
+      const { results } = data;
       setLocation(results[0].formatted_address);
     } catch (error: any) {
       present({
@@ -213,7 +210,7 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
         };
 
         const resp = await axios.post(
-          `${STATIC_URL}${isCheckIn ? "checkin" : "checkout"}`,
+          `${URL}${isCheckIn ? "checkin" : "checkout"}`,
           body,
           {
             headers: {
@@ -274,13 +271,17 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
               </IonButtons>
             </IonToolbar>
             <IonGrid>
-              <IonRow>
-                <IonCol>
-                  <IonNote class="text-center">
-                    <IonIcon icon={locationOutline} /> {location}
-                  </IonNote>
-                </IonCol>
-              </IonRow>
+              {loading ? (
+                <IonLoading spinner={"dots"} message={"Please wait"} />
+              ) : (
+                <IonRow>
+                  <IonCol>
+                    <IonNote class="text-center">
+                      <IonIcon icon={locationOutline} /> {location}
+                    </IonNote>
+                  </IonCol>
+                </IonRow>
+              )}
             </IonGrid>
           </IonContent>
         </IonModal>
@@ -306,7 +307,7 @@ const CheckIn: React.FC<CheckInProps> = ({ isCheckIn }) => {
                   <div className="selfie">
                     <img
                       alt="user_selfie"
-                      src={`${STATIC_URL_FILE}/${c.image_path}`}
+                      src={`${URL_FILE}/${c.image_path}`}
                     />
                   </div>
                 </div>
